@@ -15,11 +15,50 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 
 const Signup = () => {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [formData, setFormData] = useState({
+    fullname: "",
+    email: "",
+    role: "",
+    idno: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [role, setRole] = useState(""); // State for role selection
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8000/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert("Signup successful");
+      } else {
+        alert(data.message || "Signup failed");
+      }
+    } catch (error) {
+      console.error("Error during signup:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -27,10 +66,6 @@ const Signup = () => {
 
   const toggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(!showConfirmPassword);
-  };
-
-  const handleRoleChange = (event) => {
-    setRole(event.target.value);
   };
 
   return (
@@ -45,6 +80,8 @@ const Signup = () => {
       }}
     >
       <Box
+        component="form"
+        onSubmit={handleSubmit}
         sx={{
           width: "95%",
           maxWidth: "600px",
@@ -93,21 +130,28 @@ const Signup = () => {
             label="Full Name"
             variant="outlined"
             fullWidth
+            name="fullname"
+            value={formData.fullname}
+            onChange={handleChange}
             sx={{ mb: 2, maxWidth: "400px" }}
           />
           <TextField
             label="Email"
             variant="outlined"
             type="email"
+            name="email"
             fullWidth
+            value={formData.email}
+            onChange={handleChange}
             sx={{ mb: 2, maxWidth: "400px" }}
           />
           <FormControl fullWidth sx={{ mb: 2, maxWidth: "400px" }}>
             <InputLabel id="role-select-label">Role</InputLabel>
             <Select
               labelId="role-select-label"
-              value={role}
-              onChange={handleRoleChange}
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
               label="Role"
             >
               <MenuItem value="Student">Student</MenuItem>
@@ -117,17 +161,21 @@ const Signup = () => {
           </FormControl>
           <TextField
             label="Identity Number"
+            name="idno"
             variant="outlined"
             fullWidth
+            value={formData.idno}
+            onChange={handleChange}
             sx={{ mb: 2, maxWidth: "400px" }}
           />
           <TextField
             label="Password"
+            name="password"
             variant="outlined"
             type={showPassword ? "text" : "password"}
             fullWidth
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={handleChange}
             sx={{ mb: 2, maxWidth: "400px" }}
             InputProps={{
               endAdornment: (
@@ -141,11 +189,12 @@ const Signup = () => {
           />
           <TextField
             label="Confirm Password"
+            name="confirmPassword"
             variant="outlined"
             type={showConfirmPassword ? "text" : "password"}
             fullWidth
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            value={formData.confirmPassword}
+            onChange={handleChange}
             sx={{ mb: 3, maxWidth: "400px" }}
             InputProps={{
               endAdornment: (
@@ -158,6 +207,7 @@ const Signup = () => {
             }}
           />
           <Button
+            type="submit"
             variant="contained"
             color="primary"
             fullWidth
