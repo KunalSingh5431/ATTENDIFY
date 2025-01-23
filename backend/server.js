@@ -5,7 +5,7 @@ const bodyParser=require('body-parser');
 const authRouter = require('./routes/auth-router');
 const connectDB = require("./models/db");
 
-const port = 8000;
+const port = 8000; 
 
 const app =express();
 
