@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 
 const userSchema = new mongoose.Schema({
@@ -7,19 +7,18 @@ const userSchema = new mongoose.Schema({
     fullname: {
         type: String,
         required: true,
-        unique: true,
-        minlength: 3
+        minlength: 6
     },
     email: {
         type: String,
         required: true,
         unique: true,
-        minlength: 3
+        minlength: 10
     },
     role: {
         type: String,
         required: true,
-        enum: ['student', 'faculty', 'admin']
+        enum: ['Student', 'Faculty', 'Admin']
     },
     idno: {
         type: String,
@@ -30,7 +29,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-        minlength: 3
+        minlength: 6
     }
 });
 

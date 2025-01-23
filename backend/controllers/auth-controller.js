@@ -1,6 +1,6 @@
 const { generateToken } = require('../middlewares/token-middleware');
 const User = require('../models/user-model');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const home = async (req, res) => {
     try {
@@ -29,7 +29,6 @@ const register = async (req, res) => {
         res.status(200).json({token, message: "User Registered",});
     }
     catch (error) {
-        console.log(error);
         res.status(500).json("Internal Server Error");
     }
 }
@@ -58,7 +57,6 @@ const login = async (req, res) => {
         res.status(201).json({token, message: "User logged in",});
     }
     catch (error) {
-        console.log(error);
         res.status(500).json("Internal Server Error");
     }
 }
