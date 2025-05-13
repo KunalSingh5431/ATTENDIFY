@@ -9,227 +9,221 @@ import {
   FormControlLabel,
   Radio,
   Checkbox,
+  InputAdornment,
 } from "@mui/material";
-import { Link } from "react-router-dom";
+import {
+  Mail as MailIcon,
+  Lock as LockIcon,
+  HowToReg as RoleIcon,
+} from "@mui/icons-material";
+import { Link, useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const LoginPage = () => {
-  const [role, setRole] = useState("");
-  const [loginMethod, setLoginMethod] = useState("email");
+  const [formData, setFormData] = useState({ role: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const handleRoleChange = (event) => {
-    setRole(event.target.value);
-  };
-
-  const handleLoginMethodChange = (method) => {
-    setLoginMethod(method);
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const toggleShowPassword = () => {
     setShowPassword((prevState) => !prevState);
   };
 
-  const handleOpenCamera = () => {
-    alert("Opening Camera for Face ID...");
-  };
-
   const handleLoginSubmit = async (event) => {
     event.preventDefault();
 
-    if (loginMethod === "email") {
-      if (!email || !password) {
-        alert("Please fill in both email and password.");
-        return;
+    if (!formData.role) {
+      toast.warn("Please select your role.");
+      return;
+    }
+    if (!formData.email || !formData.password) {
+      toast.warn("Please fill in both email and password.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+
+      console.log("User Role:", formData.role);
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userRole", formData.role);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      toast.success("Login successful!", { position: "top-right", autoClose: 2000 });
+
+      setTimeout(() => {
+      switch (formData.role) {
+        case "student":
+          navigate("/student-dashboard");
+          break;
+        case "faculty":
+          navigate("/faculty-dashboard");
+          break;
+        case "admin":
+          navigate("/admin-dashboard");
+          break;
+        default:
+          navigate("/");
       }
-
-      try {
-        const response = await fetch("http://localhost:8000/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password, role }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          alert("Login successful!");
-          console.log("Login response:", data);
-        } else {
-          alert(data.message || "Login failed. Please try again.");
-        }
-      } catch (error) {
-        console.error("Error during login:", error);
-        alert("An error occurred. Please try again later.");
-      }
-    } else {
-      alert("Face ID login functionality is not implemented yet.");
+    }, 2000);
+    } catch (error) {
+      toast.error(error.message || "Login failed", {
+        position: "top-right",
+        autoClose: 2000,
+      });
     }
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "linear-gradient(135deg, #6a11cb, #2575fc)",
-        padding: 2,
-      }}
-    >
+    <>
+      <ToastContainer position="top-right" autoClose={3000} />
       <Box
         sx={{
-          width: "100%",
-          maxWidth: "450px",
-          background: "#ffffff",
-          borderRadius: "12px",
-          boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.15)",
-          padding: 4,
-          textAlign: "center",
+          minHeight: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          background: "linear-gradient(135deg, #6a11cb, #2575fc)",
+          padding: 2,
         }}
       >
-        <Typography
-          variant="h4"
+        <Box
           sx={{
-            fontWeight: "bold",
-            color: "#6a11cb",
-            marginBottom: 3,
+            width: "100%",
+            maxWidth: "450px",
+            background: "#ffffff",
+            borderRadius: "12px",
+            boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.15)",
+            padding: 4,
+            textAlign: "center",
           }}
         >
-          Attendify Login
-        </Typography>
-
-        <FormControl component="fieldset" sx={{ width: "100%", marginBottom: 3 }}>
-          <Typography variant="h6" sx={{ marginBottom: 2, color: "#6a11cb" }}>
-            Select Your Role:
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: "bold",
+              background: "linear-gradient(to right, #6a11cb, #2575fc)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1,
+            }}
+          >
+            Attendify - Sign In
           </Typography>
-          <RadioGroup
-            row
-            value={role}
-            onChange={handleRoleChange}
-            sx={{ justifyContent: "center" }}
-          >
-            <FormControlLabel
-              value="student"
-              control={<Radio />}
-              label="Student"
-            />
-            <FormControlLabel
-              value="faculty"
-              control={<Radio />}
-              label="Faculty"
-            />
-            <FormControlLabel
-              value="admin"
-              control={<Radio />}
-              label="Admin"
-            />
-          </RadioGroup>
-        </FormControl>
+          <Typography variant="subtitle1" align="center" sx={{ mb: 3, color: "gray" }}>
+            Please enter your credentials to continue
+          </Typography>
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-          <Button
-            variant={loginMethod === "email" ? "contained" : "outlined"}
-            onClick={() => handleLoginMethodChange("email")}
-            sx={{
-              width: "48%",
-              backgroundColor: loginMethod === "email" ? "#6a11cb" : "#ffffff",
-              color: loginMethod === "email" ? "#ffffff" : "#6a11cb",
-              borderColor: "#6a11cb",
-              fontWeight: "bold",
-            }}
-          >
-            Email & Password
-          </Button>
-          <Button
-            variant={loginMethod === "face" ? "contained" : "outlined"}
-            onClick={() => handleLoginMethodChange("face")}
-            sx={{
-              width: "48%",
-              backgroundColor: loginMethod === "face" ? "#6a11cb" : "#ffffff",
-              color: loginMethod === "face" ? "#ffffff" : "#6a11cb",
-              borderColor: "#6a11cb",
-              fontWeight: "bold",
-            }}
-          >
-            Face ID
-          </Button>
-        </Box>
-
-        <form onSubmit={handleLoginSubmit}>
-          {loginMethod === "email" && (
-            <>
-              <TextField
-                label="Email"
-                variant="outlined"
-                fullWidth
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                sx={{ marginBottom: 2 }}
-              />
-              <TextField
-                label="Password"
-                variant="outlined"
-                type={showPassword ? "text" : "password"}
-                fullWidth
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                sx={{ marginBottom: 2 }}
-              />
-              <Box sx={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
-                <Checkbox checked={showPassword} onChange={toggleShowPassword} />
-                <Typography variant="body2">Show Password</Typography>
-              </Box>
-            </>
-          )}
-          {loginMethod === "face" && (
-            <Box sx={{ textAlign: "center", marginBottom: 3 }}>
-              <Typography variant="body1" sx={{ marginBottom: 2 }}>
-                Use your camera for Face ID verification.
-              </Typography>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={handleOpenCamera}
-              >
-                Open Camera
-              </Button>
-            </Box>
-          )}
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            sx={{
-              paddingY: 1.5,
-              backgroundColor: "#6a11cb",
-              fontWeight: "bold",
-              color: "#ffffff",
-              "&:hover": {
-                backgroundColor: "#4a0f9c",
-              },
-            }}
-          >
-            Submit
-          </Button>
-        </form>
-
-        {role === "admin" && (
-          <Link to="/signup">
+          <FormControl component="fieldset" sx={{ width: "100%", marginBottom: 3 }}>
             <Typography
-              variant="body2"
-              sx={{ marginTop: 2, textDecoration: "underline", color: "#6a11cb" }}
+              variant="h8"
+              sx={{ marginBottom: 1, color: "#6a11cb", display: "flex", alignItems: "center", gap: 1 ,marginLeft:18,fontWeight:"bold"}}
             >
-              Don't have an account? Sign Up
+              <RoleIcon />
+              Select Your Role:
             </Typography>
-          </Link>
-        )}
+            <RadioGroup
+              name="role"
+              row
+              value={formData.role}
+              onChange={handleChange}
+              sx={{ justifyContent: "center" }}
+            >
+              <FormControlLabel value="student" control={<Radio />} label="Student" />
+              <FormControlLabel value="faculty" control={<Radio />} label="Faculty" />
+              <FormControlLabel value="admin" control={<Radio />} label="Admin" />
+            </RadioGroup>
+          </FormControl>
+
+          <form onSubmit={handleLoginSubmit}>
+            <TextField
+              name="email"
+              label="Email"
+              variant="outlined"
+              fullWidth
+              value={formData.email}
+              onChange={handleChange}
+              sx={{ marginBottom: 2 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <MailIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              name="password"
+              label="Password"
+              variant="outlined"
+              type={showPassword ? "text" : "password"}
+              fullWidth
+              value={formData.password}
+              onChange={handleChange}
+              sx={{ marginBottom: 2 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Box sx={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
+              <Checkbox checked={showPassword} onChange={toggleShowPassword} />
+              <Typography variant="body2">Show Password</Typography>
+            </Box>
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              sx={{
+                paddingY: 1.5,
+                backgroundColor: "#6a11cb",
+                fontWeight: "bold",
+                color: "#ffffff",
+                "&:hover": {
+                  backgroundColor: "#4a0f9c",
+                },
+              }}
+            >
+              Submit
+            </Button>
+          </form>
+
+          {formData.role === "admin" && (
+            <Link to="/signup" style={{ textDecoration:"none"}}>
+              <Typography
+                variant="body2"
+                sx={{
+                  marginTop: 2,
+                  fontWeight:700,
+                  color: "#6a11cb",
+                  fontSize: "15px",
+                }}
+              >
+                Don't have an account? Sign Up
+              </Typography>
+            </Link>
+          )}
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 };
 

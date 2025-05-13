@@ -13,6 +13,9 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -25,20 +28,20 @@ const Signup = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
-
+  
     try {
       const response = await fetch("http://localhost:8000/auth/register", {
         method: "POST",
@@ -47,19 +50,19 @@ const Signup = () => {
         },
         body: JSON.stringify(formData),
       });
-
+  
       const data = await response.json();
-      if (response.ok) {
-        alert("Signup successful");
-      } else {
-        alert(data.message || "Signup failed");
-      }
+      if (!response.ok) throw new Error(data.message);
+
+      toast.success("Signup successful!", { position: "top-center" });
+      setTimeout(() => navigate("/login"), 2000); 
+
     } catch (error) {
       console.error("Error during signup:", error);
-      alert("An error occurred. Please try again.");
+      toast.error(error.message, { position: "top-center" });
     }
   };
-
+  
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -69,6 +72,8 @@ const Signup = () => {
   };
 
   return (
+    <>
+    <ToastContainer position="top-right" autoClose={3000} />
     <Box
       sx={{
         minHeight: "100vh",
@@ -100,11 +105,16 @@ const Signup = () => {
           variant="h4"
           sx={{
             fontWeight: "bold",
-            mb: 1,
-            color: "#6a11cb",
+              background: "linear-gradient(to right, #6a11cb, #2575fc)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1,
           }}
         >
-          Admin Signup
+          Attendify - Sign Up
         </Typography>
 
         <Typography
@@ -114,18 +124,9 @@ const Signup = () => {
             color: "#555",
           }}
         >
-          Create your admin account to manage and access exclusive features.
+          Create account to manage and access exclusive features.
         </Typography>
-
-        <Box
-          sx={{
-            width: "100%",
-            padding: 3,
-            borderRadius: "10px",
-            backgroundColor: "#f9f9f9",
-            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-          }}
-        >
+        
           <TextField
             label="Full Name"
             variant="outlined"
@@ -221,20 +222,16 @@ const Signup = () => {
           >
             Sign Up
           </Button>
-        </Box>
-        <Link to="/login">
+        <Link to="/login" style={{ textDecoration:"none"}}>
         <Typography
           variant="body2"
           sx={{
             textAlign: "center",
             mt: 2,
             color: "#6a11cb",
-            textDecoration: "underline",
+            fontWeight:700,
             cursor: "pointer",
             "&:hover": { color: "#4a0f9c" },
-          }}
-          onClick={() => {
-            alert("Redirect to Login Page");
           }}
         >
           Already have an account? Login
@@ -242,6 +239,7 @@ const Signup = () => {
         </Link>
       </Box>
     </Box>
+    </>
   );
 };
 

@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
-const bcrypt = require('bcryptjs');
-
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
-    
     fullname: {
         type: String,
         required: true,
@@ -18,7 +16,7 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         required: true,
-        enum: ['Student', 'Faculty', 'Admin']
+        enum: ["Student", "Faculty", "Admin"]
     },
     idno: {
         type: String,
@@ -30,37 +28,21 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         minlength: 6
-    }
+    },
+    profileImage: { 
+        type: String 
+    },
 });
 
-userSchema.virtual('confirmPassword')
-    .get(function () {
-        return this._confirmPassword;
-    })
-    .set(function (value) {
-        this._confirmPassword = value;
-    });
-
-userSchema.pre('save', async function(next){
-    const user = this;
-
-    if (user.isModified('password') && user.password !== user._confirmPassword) {
-        return next(new Error('Passwords do not match'));
-    }
-
-    if(!user.isModified('password'))
-    {
-        next();
-    }
-
-    try{
+userSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) return next();
+    try {
         const salt = await bcrypt.genSalt(10);
-        const hashPassword = await bcrypt.hash(user.password, salt);
-        user.password = hashPassword;
-    }
-    catch(error){
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+    } catch (error) {
         next(error);
     }
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);
