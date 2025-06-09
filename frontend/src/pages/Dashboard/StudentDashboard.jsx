@@ -53,19 +53,19 @@ const StudentDashboard = () => {
       alert('⚠️ User data is still loading. Please wait and try again.');
       return;
     }
-  
     if (
+      !user.id ||
+      !user.fullname ||
       !className.trim() ||
       !streamName.trim() ||
       !facultyName.trim() ||
       !subjectName.trim()
     ) {
-      alert('⚠️ Please fill in all fields.');
+      alert('⚠️ All fields are required. Please fill in all fields.');
       return;
     }
-  
     const payload = {
-      userId: user._id, 
+      userId: user.id,
       name: user.fullname,
       className: className.trim(),
       streamName: streamName.trim(),
@@ -74,8 +74,8 @@ const StudentDashboard = () => {
       timestamp: new Date().toISOString(),
     };
   
-    console.log('Sending payload:', payload);
-  
+    console.log('Payload to POST:', payload);
+
     try {
       const response = await fetch('http://localhost:8000/api/attendance/mark', {
         method: 'POST',
@@ -96,10 +96,11 @@ const StudentDashboard = () => {
         alert(error.message || 'Failed to mark attendance.');
       }
     } catch (error) {
-      console.error(error);
+      console.error('Network error:', error);
       alert('Something went wrong.');
     }
   };
+  
   
 
   const presentCount = attendanceData.filter((entry) => entry.status === 'Present').length;

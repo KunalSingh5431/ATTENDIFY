@@ -23,12 +23,7 @@ const Topbar = ({user}) => {
     handleCloseMenu();
     navigate('/profile');
   };
-
-  const handlesetting=()=>{
-    handleCloseMenu();
-    navigate('/setting');
-  }
-
+  
   const handleLogout = () => {
     handleCloseMenu();
     localStorage.clear(); 
@@ -94,7 +89,6 @@ const Topbar = ({user}) => {
           }}
         >
           <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
-          <MenuItem onClick={handlesetting}>Settings</MenuItem>
           <Divider />
           <MenuItem onClick={handleLogout}>Logout</MenuItem>
         </Menu>

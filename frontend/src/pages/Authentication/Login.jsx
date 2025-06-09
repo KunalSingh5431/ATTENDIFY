@@ -10,19 +10,27 @@ import {
   Radio,
   Checkbox,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from "@mui/material";
 import {
   Mail as MailIcon,
   Lock as LockIcon,
   HowToReg as RoleIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ role: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [openPasscodeDialog, setOpenPasscodeDialog] = useState(false);
+  const [enteredPasscode, setEnteredPasscode] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -64,25 +72,44 @@ const LoginPage = () => {
       toast.success("Login successful!", { position: "top-right", autoClose: 2000 });
 
       setTimeout(() => {
-      switch (formData.role) {
-        case "student":
-          navigate("/student-dashboard");
-          break;
-        case "faculty":
-          navigate("/faculty-dashboard");
-          break;
-        case "admin":
-          navigate("/admin-dashboard");
-          break;
-        default:
-          navigate("/");
-      }
-    }, 2000);
+        switch (formData.role) {
+          case "student":
+            navigate("/student-dashboard");
+            break;
+          case "faculty":
+            navigate("/faculty-dashboard");
+            break;
+          case "admin":
+            navigate("/admin-dashboard");
+            break;
+          default:
+            navigate("/");
+        }
+      }, 2000);
     } catch (error) {
       toast.error(error.message || "Login failed", {
         position: "top-right",
         autoClose: 2000,
       });
+    }
+  };
+
+  // Admin signup click handler
+  const handleAdminSignUpClick = (e) => {
+    e.preventDefault();
+    setOpenPasscodeDialog(true);
+  };
+
+  // Passcode verification
+  const handleVerifyPasscode = () => {
+    const decodedPasscode = "admin123"; // 🔒 Replace with your secure passcode
+
+    if (enteredPasscode === decodedPasscode) {
+      setOpenPasscodeDialog(false);
+      navigate("/signup");
+    } else {
+      toast.error("Incorrect passcode. Access denied.");
+      setEnteredPasscode("");
     }
   };
 
@@ -132,7 +159,15 @@ const LoginPage = () => {
           <FormControl component="fieldset" sx={{ width: "100%", marginBottom: 3 }}>
             <Typography
               variant="h8"
-              sx={{ marginBottom: 1, color: "#6a11cb", display: "flex", alignItems: "center", gap: 1 ,marginLeft:18,fontWeight:"bold"}}
+              sx={{
+                marginBottom: 1,
+                color: "#6a11cb",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                marginLeft: 18,
+                fontWeight: "bold",
+              }}
             >
               <RoleIcon />
               Select Your Role:
@@ -207,22 +242,109 @@ const LoginPage = () => {
           </form>
 
           {formData.role === "admin" && (
-            <Link to="/signup" style={{ textDecoration:"none"}}>
-              <Typography
-                variant="body2"
-                sx={{
-                  marginTop: 2,
-                  fontWeight:700,
-                  color: "#6a11cb",
-                  fontSize: "15px",
-                }}
-              >
-                Don't have an account? Sign Up
-              </Typography>
-            </Link>
+            <Typography
+              variant="body2"
+              onClick={handleAdminSignUpClick}
+              sx={{
+                marginTop: 2,
+                fontWeight: 700,
+                color: "#6a11cb",
+                fontSize: "15px",
+                textDecoration: "none",
+                cursor: "pointer",
+              }}
+            >
+              Don't have an account? Sign Up
+            </Typography>
           )}
         </Box>
       </Box>
+
+      {/* Passcode Dialog */}
+      <Dialog
+      open={openPasscodeDialog}
+      onClose={() => setOpenPasscodeDialog(false)}
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.2)",
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          background: "linear-gradient(to right, #6a11cb, #2575fc)",
+          color: "#fff",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingY: 1.5,
+          paddingX: 2,
+          borderTopLeftRadius: 12,
+          borderTopRightRadius: 12,
+        }}
+      >
+        <Box display="flex" alignItems="center" gap={1}>
+          <LockIcon sx={{ fontSize: 24 }} />
+          Enter Admin Passcode
+        </Box>
+        <IconButton
+          aria-label="close"
+          onClick={() => setOpenPasscodeDialog(false)}
+          sx={{
+            color: "#fff",
+            "&:hover": {
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+            },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ padding: 3, mt:3 }}>
+        <TextField
+          label="Passcode"
+          type="password"
+          variant="outlined"
+          fullWidth
+          value={enteredPasscode}
+          onChange={(e) => setEnteredPasscode(e.target.value)}
+          sx={{
+            marginTop: 1,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 2,
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon color="action" />
+              </InputAdornment>
+            ),
+          }}
+        />
+      </DialogContent>
+      <DialogActions sx={{ paddingX: 3, paddingBottom: 2 }}>
+        <Button
+          onClick={handleVerifyPasscode}
+          variant="contained"
+          fullWidth
+          sx={{
+            background: "linear-gradient(to right, #6a11cb, #2575fc)",
+            color: "#fff",
+            fontWeight: "bold",
+            paddingY: 1.2,
+            borderRadius: 2,
+            "&:hover": {
+              background: "linear-gradient(to right, #4a0f9c, #1a4fbd)",
+            },
+          }}
+        >
+          Verify
+        </Button>
+      </DialogActions>
+    </Dialog>
     </>
   );
 };
