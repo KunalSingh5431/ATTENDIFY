@@ -104,7 +104,7 @@ const StudentDashboard = () => {
     }
 
     setLoading(true);
-
+    
     const payload = {
       userId: user.id,
       name: user.fullname,
@@ -115,6 +115,8 @@ const StudentDashboard = () => {
       timestamp: new Date().toISOString(),
       image: imageData,
     };
+  
+    console.log('Payload to POST:', payload);
 
     try {
       const response = await fetch('http://localhost:8000/api/attendance/mark', {
@@ -138,7 +140,7 @@ const StudentDashboard = () => {
         alert(error.message || 'Failed to mark attendance.');
       }
     } catch (error) {
-      console.error(error);
+      console.error('Network error:', error);
       alert('Something went wrong.');
     } finally {
       setLoading(false);

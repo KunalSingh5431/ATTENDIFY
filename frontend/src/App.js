@@ -15,7 +15,7 @@ import ClassRecord from "./pages/SubPages/faculty/ClassRecord";
 import ManageUsers from "./pages/SubPages/admin/ManageUsers";
 import ClassRecordAdmin from "./pages/SubPages/admin/ClassRecordAdmin";
 import Analytics from "./pages/SubPages/admin/Analytics";
-import SettingPage from "./pages/Profile/SettingPage";
+
 
 function App() {
   return (
@@ -39,7 +39,6 @@ function App() {
 
         <Route element={<PrivateRoute allowedRole={["student", "faculty", "admin"]} />}>
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/setting" element={<SettingPage />} />
         </Route>
 
         <Route element={<PrivateRoute allowedRole="student" />}>
