@@ -24,6 +24,8 @@ app.use(express.json());
 app.use("/auth", authRouter);
 app.use('/api', uploadRoutes);
 app.use('/api/attendance', attendanceRoutes);
+//app.use('/api/attendance', require('./routes/attendance'));
+
 
 
 

@@ -26,6 +26,7 @@ const StudentDashboard = () => {
   const [user, setUser] = useState(null);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
+  const [verificationResult, setVerificationResult] = useState(null);
 
   const [className, setClassName] = useState('');
   const [streamName, setStreamName] = useState('');
@@ -97,34 +98,54 @@ const StudentDashboard = () => {
       alert('⚠️ User data is still loading. Please wait and try again.');
       return;
     }
-
+  
     if (!className.trim() || !streamName.trim() || !facultyName.trim() || !subjectName.trim()) {
       alert('⚠️ Please fill in all fields.');
       return;
     }
-
-    setLoading(true);
-    
-    const payload = {
-      userId: user.id,
-      name: user.fullname,
-      className: className.trim(),
-      streamName: streamName.trim(),
-      facultyName: facultyName.trim(),
-      subjectName: subjectName.trim(),
-      timestamp: new Date().toISOString(),
-      image: imageData,
-    };
   
-    console.log('Payload to POST:', payload);
-
+    if (!imageData) {
+      alert('⚠️ Please capture your face before marking attendance.');
+      return;
+    }
+  
+    setLoading(true);
+  
     try {
+      const verifyResponse = await fetch('http://localhost:8000/api/attendance/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          image: imageData
+        })
+      });
+  
+      const verifyData = await verifyResponse.json();
+  
+      if (!verifyResponse.ok || !verifyData.match) {
+        setVerificationResult('fail');
+        setLoading(false);
+        return;
+      }
+  
+      const payload = {
+        userId: user.id,
+        name: user.fullname,
+        className: className.trim(),
+        streamName: streamName.trim(),
+        facultyName: facultyName.trim(),
+        subjectName: subjectName.trim(),
+        timestamp: new Date().toISOString(),
+        image: imageData
+      };
+  
       const response = await fetch('http://localhost:8000/api/attendance/mark', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
+  
       if (response.ok) {
         setOpenSnackbar(true);
         handleCloseDialog();
@@ -134,9 +155,9 @@ const StudentDashboard = () => {
         setSubjectName('');
         setImageData('');
         setPreviewImage('');
+        setVerificationResult('success');
       } else {
         const error = await response.json();
-        console.error('Server error:', error);
         alert(error.message || 'Failed to mark attendance.');
       }
     } catch (error) {
@@ -231,6 +252,22 @@ const StudentDashboard = () => {
             <Button variant="contained" onClick={handleMarkAttendance} color="primary" sx={{ backgroundColor: '#1976d2', borderRadius: 8 }} disabled={!user || !imageData}>
               {loading ? 'Marking...' : '📸 Mark Attendance'}
             </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog open={verificationResult !== null} onClose={() => setVerificationResult(null)}>
+          <DialogTitle>
+            {verificationResult === 'success' ? '✅ Attendance Successful' : '❌ Face Mismatch'}
+          </DialogTitle>
+          <DialogContent dividers>
+            <Typography>
+              {verificationResult === 'success'
+                ? 'Your face was verified and attendance has been marked successfully.'
+                : 'The captured face does not match the profile. Please try again or contact support.'}
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setVerificationResult(null)} variant="contained">Close</Button>
           </DialogActions>
         </Dialog>
       </Box>

@@ -4,24 +4,50 @@ const path = require('path');
 const { spawn } = require('child_process');
 const router = express.Router();
 const Attendance = require('../models/Attendance');
+const User = require('../models/user-model');
 
 // Utility: Run face recognition
-async function runFaceRecognition(base64Image) {
+async function runFaceRecognition(capturedImage, savedImage) {
   return new Promise((resolve, reject) => {
-    if (!base64Image) return reject('No image provided');
+    try {
+      const recognitionScriptPath = path.join(__dirname, '../recognition/recognition.py');
+      const python = spawn('C:\\Program Files\\Python312\\python.exe', [recognitionScriptPath, capturedImage, savedImage]);
 
-    // Ensure directory exists
-    const tempDir = path.join(__dirname, '../recognition');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir);
+      let result = '';
+      python.stdout.on('data', (data) => {
+        result += data.toString();
+      });
+
+      python.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+      });
+
+      python.on('close', (code) => {
+        if (code === 0) {
+          resolve(result.trim());
+        } else {
+          reject('Recognition script failed');
+        }
+      });
+    } catch (err) {
+      reject('Error running recognition');
+    }
+  });
+}
+
+router.post('/verify', async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: 'Image is required' });
     }
 
-    // Save image temporarily
-    const base64Data = base64Image.replace(/^data:image\/jpeg;base64,/, '');
-    const tempImagePath = path.join(tempDir, 'temp.jpg');
-    fs.writeFileSync(tempImagePath, base64Data, 'base64');
+    const imagePath = path.join(__dirname, '../temp_input.jpg');
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    fs.writeFileSync(imagePath, base64Data, { encoding: 'base64' });
 
-    const python = spawn('python', ['recognition/recognition.py', tempImagePath]);
+    const scriptPath = path.join(__dirname, '../recognition/recognition.py');
+    const python = spawn('C:\\Program Files\\Python312\\python.exe', [scriptPath, imagePath]);
 
     let result = '';
     python.stdout.on('data', (data) => {
@@ -29,20 +55,36 @@ async function runFaceRecognition(base64Image) {
     });
 
     python.stderr.on('data', (data) => {
-      console.error(`stderr: ${data}`);
+      console.error('Python error:', data.toString());
     });
 
-    python.on('close', (code) => {
-      fs.unlinkSync(tempImagePath); // cleanup
+    python.on('close', async (code) => {
+      console.log('Python script closed with code', code);
+      result = result.trim();
 
-      if (code === 0) {
-        resolve(result.trim());
-      } else {
-        reject('Recognition failed');
+      if (!result || result === 'Unknown') {
+        return res.status(401).json({ message: 'Face not recognized' });
       }
+
+      const user = await User.findOne({ name: result });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json({
+        message: 'Face verified successfully',
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+        },
+      });
     });
-  });
-}
+  } catch (error) {
+    console.error('Verification error:', error.message);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+  }
+});
 
 // POST /api/attendance/mark
 router.post('/mark', async (req, res) => {
