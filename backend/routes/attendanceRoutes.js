@@ -123,4 +123,13 @@ router.post('/mark', async (req, res) => {
   }
 });
 
+router.get('/get-all', async (req, res) => {
+  try {
+    const records = await Attendance.find();
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching attendance records', error });
+  }
+});
+
 module.exports = router;
