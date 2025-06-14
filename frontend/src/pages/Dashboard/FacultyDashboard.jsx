@@ -36,37 +36,18 @@ const FacultyDashboard = () => {
       setUser(JSON.parse(storedUser));
     }
 
-    const sampleData = [
-      {
-        id: 1,
-        className: 'Class A',
-        subjectName: 'Math',
-        studentName: 'John Doe',
-        date: '2025-06-06',
-        timestamp: '2025-06-06T09:00:00',
-        status: 'Present',
-      },
-      {
-        id: 2,
-        className: 'Class A',
-        subjectName: 'Math',
-        studentName: 'Jane Smith',
-        date: '2025-06-06',
-        timestamp: '2025-06-06T09:05:00',
-        status: 'Absent',
-      },
-      {
-        id: 3,
-        className: 'Class B',
-        subjectName: 'Science',
-        studentName: 'Alice',
-        date: '2025-06-05',
-        timestamp: '2025-06-05T10:00:00',
-        status: 'Present',
-      },
-    ];
-    setAttendanceRecords(sampleData);
-    setFilteredRecords(sampleData);
+    const fetchData = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/attendance/get-all');
+        const data = await response.json();
+        setAttendanceRecords(data);
+        setFilteredRecords(data);
+      } catch (error) {
+        console.error('Error fetching attendance data:', error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const applyFilters = () => {
@@ -102,7 +83,7 @@ const FacultyDashboard = () => {
 
   const exportToExcel = () => {
     const dataToExport = filteredRecords.map((record) => ({
-      ID: record.id,
+      ID: record._id,
       'Student Name': record.studentName,
       Class: record.className,
       Subject: record.subjectName,
@@ -213,6 +194,16 @@ const FacultyDashboard = () => {
                 </Grid>
               </Grid>
 
+              {/* Stats */}
+              <Box sx={{ mb: 3, display: 'flex', gap: 4 }}>
+                <Typography variant="subtitle1" color="success.main" fontWeight="bold">
+                  ✅ Present: {filteredRecords.filter(r => r.status === 'Present').length}
+                </Typography>
+                <Typography variant="subtitle1" color="error.main" fontWeight="bold">
+                  ❌ Absent: {filteredRecords.filter(r => r.status === 'Absent').length}
+                </Typography>
+              </Box>
+
               {/* Attendance Table */}
               <Paper elevation={2}>
                 <Table>
@@ -229,8 +220,8 @@ const FacultyDashboard = () => {
                   </TableHead>
                   <TableBody>
                     {filteredRecords.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell>{record.id}</TableCell>
+                      <TableRow key={record._id}>
+                        <TableCell>{record._id}</TableCell>
                         <TableCell>{record.studentName}</TableCell>
                         <TableCell>{record.className}</TableCell>
                         <TableCell>{record.subjectName}</TableCell>
