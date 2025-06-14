@@ -1,107 +1,64 @@
-import cv2
-import numpy as np
 import face_recognition
-import os
-from datetime import datetime
+import numpy as np
 import sys
+import base64
+import json
+from io import BytesIO
+from PIL import Image
 
-# Check if image path argument is provided
-if len(sys.argv) < 2:
-    print("Image path not provided")
+# Ensure stdout prints correctly on Windows
+sys.stdout.reconfigure(encoding='utf-8')
+
+# Read input from Node.js
+data = sys.stdin.read()
+try:
+    payload = json.loads(data)
+    known_img_b64 = payload['knownImage']
+    test_img_b64 = payload['testImage']
+except Exception as e:
+    print("Failed to parse input:", e, flush=True)
     sys.exit(1)
 
-image_path = sys.argv[1]
-base_dir = os.path.dirname(os.path.abspath(__file__))
+def b64_to_rgb_array(b64_data):
+    try:
+        img_data = base64.b64decode(b64_data)
+        img = Image.open(BytesIO(img_data)).convert('RGB')
+        return np.array(img)
+    except Exception as e:
+        print("Failed to decode base64 image:", e, flush=True)
+        sys.exit(1)
 
-uploads_path = os.path.join(base_dir, 'uploads')
-attendance_path = os.path.join(base_dir, 'Attendance')
+# Convert base64 to images
+known_img = b64_to_rgb_array(known_img_b64)
+test_img = b64_to_rgb_array(test_img_b64)
 
-# Load known images and their names
-images = []
-classNames = []
-myList = os.listdir(uploads_path)
+# Encode faces
+# print("Starting face encoding...", flush=True)
 
-for cl in myList:
-    img_path = os.path.join(uploads_path, cl)
-    curImg = cv2.imread(img_path)
-    if curImg is None:
-        print(f"Warning: Could not read image {img_path}")
-        continue
-    curImg = cv2.cvtColor(curImg, cv2.COLOR_BGR2RGB)
-    images.append(curImg)
-    classNames.append(os.path.splitext(cl)[0])  # filename without extension
+known_encs = face_recognition.face_encodings(known_img)
+# print(f"Known faces found: {len(known_encs)}", flush=True)
 
-def findEncodings(images):
-    encodeList = []
-    for img in images:
-        encodings = face_recognition.face_encodings(img)
-        if encodings:
-            encodeList.append(encodings[0])
-        else:
-            encodeList.append(None)
-    # Filter out None encodings (images with no detectable face)
-    encodeList = [enc for enc in encodeList if enc is not None]
-    return encodeList
+test_encs = face_recognition.face_encodings(test_img)
+# print(f"Test faces found: {len(test_encs)}", flush=True)
 
-def markAttendance(name):
-    now = datetime.now()
-    date_str = now.strftime('%d-%m-%Y')
-    time_str = now.strftime('%H:%M:%S')
-    filename = os.path.join(attendance_path, f"{date_str}.csv")
-
-    if not os.path.exists(attendance_path):
-        os.makedirs(attendance_path)
-
-    # If file does not exist, create with headers
-    if not os.path.exists(filename):
-        with open(filename, 'w') as f:
-            f.write("Name,Time,Date\n")
-
-    # Read existing names to avoid duplicates
-    with open(filename, 'r+') as f:
-        lines = f.readlines()
-        names_logged = [line.split(',')[0] for line in lines[1:]]  # skip header line
-        if name not in names_logged:
-            f.write(f"{name},{time_str},{date_str}\n")
-
-# Find encodings for known images
-encodeListKnown = findEncodings(images)
-
-if not encodeListKnown:
-    print("No valid face encodings found in uploads folder.")
+if not known_encs:
+    print("No face in known image", flush=True)
+    sys.exit(1)
+if not test_encs:
+    print("No face in test image", flush=True)
     sys.exit(1)
 
-# Load the input image to test
-testImg = cv2.imread(image_path)
-if testImg is None:
-    print("Image not found or invalid format")
-    sys.exit(1)
+# Compare
+distance = face_recognition.face_distance([known_encs[0]], test_encs[0])[0]
+# print(f"Face distance: {distance:.4f}", flush=True)
 
-testImg = cv2.cvtColor(testImg, cv2.COLOR_BGR2RGB)
+# Threshold matching
+threshold = 0.55
+# print(f"Threshold: {threshold}", flush=True)
 
-# Find faces and encodings in the test image
-facesCurFrame = face_recognition.face_locations(testImg)
-encodesCurFrame = face_recognition.face_encodings(testImg, facesCurFrame)
-
-if len(encodesCurFrame) == 0:
-    print("No face detected in the input image.")
+if distance <= threshold:
+    print("Matched", flush=True)
     sys.exit(0)
-
-for encodeFace, faceLoc in zip(encodesCurFrame, facesCurFrame):
-    matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
-    faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
-    
-    if len(faceDis) == 0:
-        print("No known faces to compare.")
-        sys.exit(0)
-
-    matchIndex = np.argmin(faceDis)
-
-    if matches[matchIndex]:
-        name = classNames[matchIndex].upper()
-        markAttendance(name)
-        print(name)
-        sys.exit(0)
-
-print("Unknown")
-sys.exit(0)
+else:
+    print("Unknown", flush=True)
+    sys.exit(0)
