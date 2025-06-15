@@ -26,7 +26,7 @@ import { toast } from 'react-toastify';
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -65,7 +65,7 @@ const ProfilePage = () => {
         return toast.error(errorMessage);
       }
   
-      const data = await res.json();
+      /*const data = await res.json();*/
       toast.success('Profile image updated successfully');
   
       const updatedUser = { ...user, profileImage, avatar: profileImage };

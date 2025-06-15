@@ -9,7 +9,7 @@ import StudentDashboard from "./pages/Dashboard/StudentDashboard";
 import PrivateRoute from "./components/Routes/PrivateRoute";
 import ProfilePage from "./pages/Profile/ProfilePage";
 import ViewAttendance from "./pages/SubPages/student/ViewAttendance";
-import StudentList from "./pages/SubPages/faculty/StudentList";
+/*import StudentList from "./pages/SubPages/faculty/StudentList";*/
 import ClassRecord from "./pages/SubPages/faculty/ClassRecord";
 import ManageUsers from "./pages/SubPages/admin/ManageUsers";
 import ClassRecordAdmin from "./pages/SubPages/admin/ClassRecordAdmin";

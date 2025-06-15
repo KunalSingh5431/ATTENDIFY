@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, FormControl, InputLabel, Select, MenuItem,
   Table, TableHead, TableBody, TableRow, TableCell, Paper
 } from '@mui/material';
+import Sidebar from '../../../components/Routes/Sidebar';
+import Topbar from '../../../components/Routes/Topbar';
 
 const classAttendance = {
   "Class A": [
@@ -17,43 +19,65 @@ const classAttendance = {
 
 const ClassRecordAdmin = () => {
   const [selectedClass, setSelectedClass] = useState('');
+  const [user, setUser] = useState(null);
+
+  // Fetch user from localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   return (
-    <Box sx={{ background: '#e8f5e9', p: 4, borderRadius: 3 }}>
-      <Typography variant="h5" gutterBottom>📚 Class Record</Typography>
-      <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel>Select Class</InputLabel>
-        <Select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} label="Select Class">
-          {Object.keys(classAttendance).map((cls) => (
-            <MenuItem key={cls} value={cls}>{cls}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f0f4c3' }}>
+      <Sidebar role="admin"/>
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        {user && <Topbar user={user} />}
 
-      {selectedClass && (
-        <Paper sx={{ borderRadius: 2 }}>
-          <Table>
-            <TableHead sx={{ backgroundColor: '#c8e6c9' }}>
-              <TableRow>
-                <TableCell><strong>Date</strong></TableCell>
-                <TableCell><strong>Present</strong></TableCell>
-                <TableCell><strong>Absent</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {classAttendance[selectedClass].map((record, index) => (
-                <TableRow key={index}>
-                  <TableCell>{record.date}</TableCell>
-                  <TableCell>{record.present}</TableCell>
-                  <TableCell>{record.absent}</TableCell>
-                </TableRow>
+        <Box sx={{ mt: 4, background: '#e8f5e9', p: 4, borderRadius: 3 }}>
+          <Typography variant="h5" gutterBottom>📚 Class Record</Typography>
+
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel>Select Class</InputLabel>
+            <Select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              label="Select Class"
+            >
+              {Object.keys(classAttendance).map((cls) => (
+                <MenuItem key={cls} value={cls}>{cls}</MenuItem>
               ))}
-            </TableBody>
-          </Table>
-        </Paper>
-      )}
+            </Select>
+          </FormControl>
+
+          {selectedClass && (
+            <Paper sx={{ borderRadius: 2 }}>
+              <Table>
+                <TableHead sx={{ backgroundColor: '#c8e6c9' }}>
+                  <TableRow>
+                    <TableCell><strong>Date</strong></TableCell>
+                    <TableCell><strong>Present</strong></TableCell>
+                    <TableCell><strong>Absent</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {classAttendance[selectedClass].map((record, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{record.date}</TableCell>
+                      <TableCell>{record.present}</TableCell>
+                      <TableCell>{record.absent}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 };
 
 export default ClassRecordAdmin;
+

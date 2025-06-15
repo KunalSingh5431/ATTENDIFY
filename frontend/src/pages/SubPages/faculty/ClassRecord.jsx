@@ -15,13 +15,15 @@ import {
   TableCell,
   Paper,
   TableContainer,
-  CircularProgress
+  CircularProgress,
+  TextField,
 } from '@mui/material';
 
 const semesterList = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
 const ClassRecord = () => {
   const [selectedSemester, setSelectedSemester] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [attendanceData, setAttendanceRecords] = useState([]);
@@ -33,19 +35,22 @@ const ClassRecord = () => {
     }
   }, []);
 
-  const fetchData = async (semester) => {
+  const fetchData = async (semester, date) => {
     setLoading(true);
     try {
       const response = await fetch('http://localhost:8000/api/attendance/get-all');
       const data = await response.json();
 
-      const filtered = data.filter(record => record.semester === semester);
+      const filtered = data.filter(record => {
+        const recordDate = new Date(record.timestamp).toLocaleDateString('en-CA');
+        return record.semester === semester && (!date || recordDate === date);
+      });
 
       const grouped = {};
 
       filtered.forEach(record => {
         const dateObj = new Date(record.timestamp);
-        const dateKey = dateObj.toLocaleDateString('en-CA'); 
+        const dateKey = dateObj.toLocaleDateString('en-CA');
         const subject = record.subjectName || 'Unknown';
         const key = `${dateKey}_${subject}`;
 
@@ -54,19 +59,15 @@ const ClassRecord = () => {
             date: dateKey,
             subjectName: subject,
             present: 0,
-            absent: 0
           };
         }
 
         if (record.status === 'Present') {
           grouped[key].present += 1;
-        } else if (record.status === 'Absent') {
-          grouped[key].absent += 1;
         }
       });
 
-      const summaryArray = Object.values(grouped);
-      setAttendanceRecords(summaryArray);
+      setAttendanceRecords(Object.values(grouped));
     } catch (error) {
       console.error('Error fetching attendance data:', error);
     } finally {
@@ -76,9 +77,9 @@ const ClassRecord = () => {
 
   useEffect(() => {
     if (selectedSemester) {
-      fetchData(selectedSemester);
+      fetchData(selectedSemester, selectedDate);
     }
-  }, [selectedSemester]);
+  }, [selectedSemester, selectedDate]);
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -95,32 +96,73 @@ const ClassRecord = () => {
             alignItems: 'center',
           }}
         >
-          <Paper elevation={4} sx={{ p: 4, borderRadius: 4, width: '100%', maxWidth: 700, backgroundColor: '#ffffffdd' }}>
-            <Typography variant="h4" align="center" gutterBottom sx={{ fontWeight: 'bold', color: '#388e3c' }}>
+          <Paper
+            elevation={4}
+            sx={{
+              p: 4,
+              borderRadius: 4,
+              width: '100%',
+              maxWidth: 1050,
+              backgroundColor: '#ffffffdd',
+            }}
+          >
+            <Typography
+              variant="h5"
+              align="center"
+              gutterBottom
+              sx={{ fontWeight: 'bold', color: '#388e3c' }}
+            >
               📊 Semester Attendance Record
             </Typography>
 
-            <FormControl fullWidth sx={{ mb: 4 }}>
-              <InputLabel id="semester-select-label">Select Semester</InputLabel>
-              <Select
-                labelId="semester-select-label"
-                value={selectedSemester}
-                onChange={(e) => setSelectedSemester(e.target.value)}
-                label="Select Semester"
+            {/* Semester and Date filters */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                mt:4,
+                mb: 4,
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+              }}
+            >
+              <FormControl sx={{ minWidth: 300 }}>
+                <InputLabel id="semester-select-label">Select Semester</InputLabel>
+                <Select
+                  labelId="semester-select-label"
+                  value={selectedSemester}
+                  onChange={(e) => setSelectedSemester(e.target.value)}
+                  label="Select Semester"
+                  sx={{
+                    borderRadius: 2,
+                    backgroundColor: '#f1f8e9',
+                    '&:hover': { backgroundColor: '#dcedc8' },
+                  }}
+                >
+                  {semesterList.map((sem) => (
+                    <MenuItem key={sem} value={sem}>
+                      {sem}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <TextField
+                type="date"
+                label="Select Date"
+                InputLabelProps={{ shrink: true }}
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
                 sx={{
-                  borderRadius: 2,
+                  minWidth: 300,
                   backgroundColor: '#f1f8e9',
+                  borderRadius: 2,
                   '&:hover': { backgroundColor: '#dcedc8' },
                 }}
-              >
-                {semesterList.map((sem) => (
-                  <MenuItem key={sem} value={sem}>
-                    {sem}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              />
+            </Box>
 
+            {/* Loader or Table */}
             {loading ? (
               <Box display="flex" justifyContent="center" alignItems="center" sx={{ mt: 4 }}>
                 <CircularProgress color="success" />
@@ -130,39 +172,37 @@ const ClassRecord = () => {
               (attendanceData.length > 0 ? (
                 <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 6 }}>
                   <Table>
-                    <TableHead sx={{ backgroundColor: '#c8e6c9' }}>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold' }}>📅 Date</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>📕 Subject</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>✅ Present</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>❌ Absent</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>📌 Total</TableCell>
+                  <TableHead sx={{ backgroundColor: '#c8e6c9' }}>
+                    <TableRow>
+                      <TableCell align="center" sx={{ fontWeight: 'bold' }}>📅 Date</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 'bold' }}>📕 Subject</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 'bold' }}>✅ Present</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {attendanceData.map((record, index) => (
+                      <TableRow
+                        key={index}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: '#f1f8e9',
+                            transition: '0.3s',
+                          },
+                        }}
+                      >
+                        <TableCell align="center">{record.date}</TableCell>
+                        <TableCell align="center">{record.subjectName}</TableCell>
+                        <TableCell align="center">{record.present}</TableCell>
                       </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {attendanceData.map((record, index) => (
-                        <TableRow
-                          key={index}
-                          sx={{
-                            '&:hover': {
-                              backgroundColor: '#f1f8e9',
-                              transition: '0.3s',
-                            },
-                          }}
-                        >
-                          <TableCell>{record.date}</TableCell>
-                          <TableCell>{record.subjectName}</TableCell>
-                          <TableCell>{record.present}</TableCell>
-                          <TableCell>{record.absent}</TableCell>
-                          <TableCell>{record.present + record.absent}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
+                    ))}
+                  </TableBody>
+
                   </Table>
                 </TableContainer>
               ) : (
                 <Typography align="center" color="text.secondary" sx={{ mt: 2 }}>
-                  No attendance data found for semester {selectedSemester}.
+                  No attendance data found for semester {selectedSemester}
+                  {selectedDate && ` on ${selectedDate}`}.
                 </Typography>
               ))
             )}
@@ -174,3 +214,4 @@ const ClassRecord = () => {
 };
 
 export default ClassRecord;
+

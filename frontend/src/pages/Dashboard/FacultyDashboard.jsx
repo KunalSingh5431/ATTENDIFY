@@ -16,9 +16,8 @@ import {
   TableCell,
   TableBody,
   Paper,
-  Modal,
+  TablePagination,
 } from '@mui/material';
-import * as XLSX from 'xlsx';
 
 const FacultyDashboard = () => {
   const [user, setUser] = useState(null);
@@ -31,8 +30,8 @@ const FacultyDashboard = () => {
   const [filterStartTime, setFilterStartTime] = useState('');
   const [filterEndTime, setFilterEndTime] = useState('');
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [totalStudents, setTotalStudents] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const rowsPerPage = 10;
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -86,39 +85,28 @@ const FacultyDashboard = () => {
     }
 
     setFilteredRecords(filtered);
+    setCurrentPage(0);
   };
 
-  const exportToExcel = () => {
-    const dataToExport = filteredRecords.map((record) => ({
-      ID: record._id,
-      StudentName: record.name,
-      Semester: record.semester,
-      Subject: record.subjectName,
-      Date: new Date(record.timestamp).toLocaleDateString('en-CA'),
-      Time: new Date(record.timestamp).toLocaleTimeString(),
-      Status: record.status,
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendance Records');
-
-    XLSX.writeFile(workbook, 'AttendanceRecords.xlsx');
+  const resetFilters = () => {
+    setFilterSem('');
+    setFilterSubject('');
+    setFilterDate('');
+    setFilterStartTime('');
+    setFilterEndTime('');
+    setFilteredRecords(attendanceRecords);
+    setCurrentPage(0);
   };
 
   const presentCount = filteredRecords.filter(r => r.status === 'Present').length;
-  const absentCount = totalStudents !== '' ? Math.max(parseInt(totalStudents) - presentCount, 0) : '-';
+  const paginatedRecords = filteredRecords.slice(
+    currentPage * rowsPerPage,
+    currentPage * rowsPerPage + rowsPerPage
+  );
 
   if (!user) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-        }}
-      >
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <Typography variant="h6">Loading...</Typography>
       </Box>
     );
@@ -137,73 +125,31 @@ const FacultyDashboard = () => {
               </Typography>
               <Divider sx={{ my: 2 }} />
 
-              {/* Filters */}
               <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    label="Semester"
-                    value={filterSem}
-                    onChange={(e) => setFilterSem(e.target.value)}
-                  />
+                  <TextField fullWidth label="Semester" value={filterSem} onChange={(e) => setFilterSem(e.target.value)} />
                 </Grid>
                 <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    label="Subject Name"
-                    value={filterSubject}
-                    onChange={(e) => setFilterSubject(e.target.value)}
-                  />
+                  <TextField fullWidth label="Subject Name" value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)} />
                 </Grid>
                 <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    type="date"
-                    label="Date"
-                    InputLabelProps={{ shrink: true }}
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
-                  />
+                  <TextField fullWidth type="date" label="Date" InputLabelProps={{ shrink: true }} value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
                 </Grid>
                 <Grid item xs={6} md={1.5}>
-                  <TextField
-                    fullWidth
-                    type="time"
-                    label="Start Time"
-                    InputLabelProps={{ shrink: true }}
-                    value={filterStartTime}
-                    onChange={(e) => setFilterStartTime(e.target.value)}
-                  />
+                  <TextField fullWidth type="time" label="Start Time" InputLabelProps={{ shrink: true }} value={filterStartTime} onChange={(e) => setFilterStartTime(e.target.value)} />
                 </Grid>
                 <Grid item xs={6} md={1.5}>
-                  <TextField
-                    fullWidth
-                    type="time"
-                    label="End Time"
-                    InputLabelProps={{ shrink: true }}
-                    value={filterEndTime}
-                    onChange={(e) => setFilterEndTime(e.target.value)}
-                  />
+                  <TextField fullWidth type="time" label="End Time" InputLabelProps={{ shrink: true }} value={filterEndTime} onChange={(e) => setFilterEndTime(e.target.value)} />
                 </Grid>
                 <Grid item xs={12}>
-                  <Button variant="contained" onClick={applyFilters} sx={{ mr: 2 }}>
-                    Apply Filters
-                  </Button>
-                  <Button variant="outlined" color="success" onClick={exportToExcel}>
-                    Export to Excel
-                  </Button>
-                  <Button variant="outlined" color="error" onClick={() => setIsModalOpen(true)} sx={{ ml: 2 }}>
-                    Find Absent
-                  </Button>
+                  <Button variant="contained" onClick={applyFilters} sx={{ mr: 2 }}>Apply Filters</Button>
+                  <Button variant="contained" sx={{ backgroundColor: '#8e24aa', '&:hover': { backgroundColor: '#6a1b9a' } }} onClick={resetFilters}>Reset All Filters</Button>
                 </Grid>
               </Grid>
 
-              <Box sx={{ mb: 3, display: 'flex', gap: 4 }}>
+              <Box sx={{ mb: 3 }}>
                 <Typography variant="subtitle1" color="success.main" fontWeight="bold">
                   ✅ Present: {presentCount}
-                </Typography>
-                <Typography variant="subtitle1" color="error.main" fontWeight="bold">
-                  ❌ Absent: {absentCount !== '-' ? absentCount : 'Enter total'}
                 </Typography>
               </Box>
 
@@ -211,7 +157,6 @@ const FacultyDashboard = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>ID</TableCell>
                       <TableCell>Student Name</TableCell>
                       <TableCell>Semester</TableCell>
                       <TableCell>Subject</TableCell>
@@ -221,92 +166,42 @@ const FacultyDashboard = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredRecords.map((record) => (
+                    {paginatedRecords.map((record) => (
                       <TableRow key={record._id}>
-                        <TableCell>{record._id}</TableCell>
                         <TableCell>{record.name}</TableCell>
                         <TableCell>{record.semester}</TableCell>
                         <TableCell>{record.subjectName}</TableCell>
-                        <TableCell>
-                          {new Date(record.timestamp).toLocaleDateString('en-CA')}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(record.timestamp).toLocaleTimeString()}
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            color: record.status === 'Present' ? 'success.main' : 'error.main',
-                            fontWeight: 'bold',
-                          }}
-                        >
-                          {record.status}
-                        </TableCell>
+                        <TableCell>{new Date(record.timestamp).toLocaleDateString('en-CA')}</TableCell>
+                        <TableCell>{new Date(record.timestamp).toLocaleTimeString()}</TableCell>
+                        <TableCell sx={{ color: record.status === 'Present' ? 'success.main' : 'error.main', fontWeight: 'bold' }}>{record.status}</TableCell>
                       </TableRow>
                     ))}
                     {filteredRecords.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} align="center">
-                          No records found.
-                        </TableCell>
+                        <TableCell colSpan={7} align="center">No records found.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
+                <TablePagination
+                  component="div"
+                  count={filteredRecords.length}
+                  page={currentPage}
+                  onPageChange={(event, newPage) => setCurrentPage(newPage)}
+                  rowsPerPage={rowsPerPage}
+                  rowsPerPageOptions={[10]}
+                />
               </Paper>
             </CardContent>
           </Card>
         </Box>
       </Box>
-
-      <Modal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        aria-labelledby="absent-modal-title"
-        aria-describedby="absent-modal-description"
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 400,
-            bgcolor: 'background.paper',
-            boxShadow: 24,
-            p: 4,
-            borderRadius: 2,
-          }}
-        >
-          <Typography id="absent-modal-title" variant="h6" fontWeight="bold" gutterBottom>
-            Calculate Absent Students
-          </Typography>
-
-          <TextField
-            fullWidth
-            label="Total Number of Students"
-            type="number"
-            value={totalStudents}
-            onChange={(e) => setTotalStudents(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-
-          <Typography>
-            ✅ Present: <strong>{presentCount}</strong>
-          </Typography>
-          <Typography sx={{ mt: 1 }}>
-            ❌ Absent: <strong>{absentCount}</strong>
-          </Typography>
-
-          <Box sx={{ textAlign: 'right', mt: 3 }}>
-            <Button onClick={() => setIsModalOpen(false)} variant="contained" color="success">
-              Close
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
     </Box>
   );
 };
 
 export default FacultyDashboard;
+
+
+
 

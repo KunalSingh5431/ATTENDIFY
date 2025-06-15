@@ -13,9 +13,10 @@ import {
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import SchoolIcon from '@mui/icons-material/School';
-import NotificationsIcon from '@mui/icons-material/Notifications';
+/*import NotificationsIcon from '@mui/icons-material/Notifications';*/
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import { useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ role }) => {
@@ -46,7 +47,7 @@ const Sidebar = ({ role }) => {
 
   const facultyItems = [
     { text: 'Class Records', icon: <SchoolIcon />, path: '/class-record' },
-    { text: 'Attendance Files', icon: <SchoolIcon />, path: '/attendence-file' },
+    { text: 'Attendance Files', icon: <InsertDriveFileIcon />, path: '/attendence-file' },
     //{ text: 'Student List', icon: <PeopleIcon />, path: '/student-list' }
   ];
 
@@ -107,6 +108,7 @@ const Sidebar = ({ role }) => {
               sx={{
                 paddingY: '10px',
                 paddingX: collapsed ? '12px' : '24px',
+                cursor: 'pointer',
                 '&:hover': {
                   backgroundColor: '#334155'
                 }
