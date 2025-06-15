@@ -4,13 +4,13 @@ const attendanceSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'User' // optional, if you have a User model
+    ref: 'User' 
   },
   name: {
     type: String,
     required: true
   },
-  className: {
+  semester: {
     type: String,
     required: true
   },

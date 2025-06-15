@@ -27,7 +27,7 @@ const StudentDashboard = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
 
-  const [className, setClassName] = useState('');
+  const [semester, setSemester] = useState('');
   const [streamName, setStreamName] = useState('');
   const [facultyName, setFacultyName] = useState('');
   const [subjectName, setSubjectName] = useState('');
@@ -98,7 +98,7 @@ const StudentDashboard = () => {
       return;
     }
 
-    if (!className.trim() || !streamName.trim() || !facultyName.trim() || !subjectName.trim()) {
+    if (!semester.trim() || !streamName.trim() || !facultyName.trim() || !subjectName.trim()) {
       alert('⚠️ Please fill in all fields.');
       return;
     }
@@ -108,7 +108,7 @@ const StudentDashboard = () => {
     const payload = {
       userId: user.id,
       name: user.fullname,
-      className: className.trim(),
+      semester: semester.trim(),
       streamName: streamName.trim(),
       facultyName: facultyName.trim(),
       subjectName: subjectName.trim(),
@@ -126,7 +126,7 @@ const StudentDashboard = () => {
       if (response.ok) {
         setOpenSnackbar(true);
         handleCloseDialog();
-        setClassName('');
+        setSemester('');
         setStreamName('');
         setFacultyName('');
         setSubjectName('');
@@ -208,7 +208,7 @@ const StudentDashboard = () => {
           </DialogTitle>
           <DialogContent dividers>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-              <TextField label="Class Name" variant="outlined" value={className} onChange={(e) => setClassName(e.target.value)} fullWidth />
+              <TextField label="Semester" variant="outlined" value={semester} onChange={(e) => setSemester(e.target.value)} fullWidth />
               <TextField label="Stream Name" variant="outlined" value={streamName} onChange={(e) => setStreamName(e.target.value)} fullWidth />
               <TextField label="Faculty Name" variant="outlined" value={facultyName} onChange={(e) => setFacultyName(e.target.value)} fullWidth />
               <TextField label="Subject Name" variant="outlined" value={subjectName} onChange={(e) => setSubjectName(e.target.value)} fullWidth />

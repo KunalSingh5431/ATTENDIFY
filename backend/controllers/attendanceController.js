@@ -42,9 +42,10 @@ const handleRecognition = async (capturedImageBase64, cloudinaryUrl) => {
     const code = await new Promise((resolve) => py.on('close', resolve));
     console.log('Python exited with code:', code);
 
-    if (code !== 0 || result.includes("Unknown")) {
-      throw new Error(`Recognition failed: ${error || result}`);
-    }
+    if (code !== 0) {
+  throw new Error(`Recognition failed: ${error || result}`);
+}
+
 
     return "Matched";
 
@@ -69,7 +70,7 @@ const saveAttendanceToCSV = async (entry) => {
   const csvLine = [
     entry.userId,
     entry.name,
-    entry.className || '',
+    entry.semester || '',
     entry.streamName,
     entry.facultyName,
     entry.subjectName,

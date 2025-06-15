@@ -8,13 +8,13 @@ import FacultyDashboard from "./pages/Dashboard/FacultyDashboard";
 import StudentDashboard from "./pages/Dashboard/StudentDashboard";
 import PrivateRoute from "./components/Routes/PrivateRoute";
 import ProfilePage from "./pages/Profile/ProfilePage";
-
 import ViewAttendance from "./pages/SubPages/student/ViewAttendance";
 import StudentList from "./pages/SubPages/faculty/StudentList";
 import ClassRecord from "./pages/SubPages/faculty/ClassRecord";
 import ManageUsers from "./pages/SubPages/admin/ManageUsers";
 import ClassRecordAdmin from "./pages/SubPages/admin/ClassRecordAdmin";
 import Analytics from "./pages/SubPages/admin/Analytics";
+import AttendanceFile from "./pages/SubPages/faculty/AttendanceFile";
 
 
 function App() {
@@ -46,7 +46,7 @@ function App() {
         </Route>
 
         <Route element={<PrivateRoute allowedRole="faculty" />}>
-          <Route path="/student-list" element={<StudentList />} />
+          <Route path="/attendence-file" element={<AttendanceFile/>} />
           <Route path="/class-record" element={<ClassRecord />} />
         </Route>
 

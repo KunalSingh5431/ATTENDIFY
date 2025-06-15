@@ -16,6 +16,7 @@ import {
   TableCell,
   TableBody,
   Paper,
+  Modal,
 } from '@mui/material';
 import * as XLSX from 'xlsx';
 
@@ -24,11 +25,14 @@ const FacultyDashboard = () => {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [filteredRecords, setFilteredRecords] = useState([]);
 
-  const [filterClass, setFilterClass] = useState('');
+  const [filterSem, setFilterSem] = useState('');
   const [filterSubject, setFilterSubject] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [filterStartTime, setFilterStartTime] = useState('');
   const [filterEndTime, setFilterEndTime] = useState('');
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [totalStudents, setTotalStudents] = useState('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -53,9 +57,9 @@ const FacultyDashboard = () => {
   const applyFilters = () => {
     let filtered = attendanceRecords;
 
-    if (filterClass) {
+    if (filterSem) {
       filtered = filtered.filter((record) =>
-        record.className.toLowerCase().includes(filterClass.toLowerCase())
+        record.semester.toLowerCase().includes(filterSem.toLowerCase())
       );
     }
 
@@ -66,14 +70,17 @@ const FacultyDashboard = () => {
     }
 
     if (filterDate) {
-      filtered = filtered.filter((record) => record.date === filterDate);
+      filtered = filtered.filter((record) => {
+        const recordDate = new Date(record.timestamp).toLocaleDateString('en-CA');
+        return recordDate === filterDate;
+      });
     }
 
-    if (filterStartTime && filterEndTime) {
+    if (filterDate && filterStartTime && filterEndTime) {
       filtered = filtered.filter((record) => {
         const recordTime = new Date(record.timestamp).getTime();
-        const startTime = new Date(`${record.date}T${filterStartTime}`).getTime();
-        const endTime = new Date(`${record.date}T${filterEndTime}`).getTime();
+        const startTime = new Date(`${filterDate}T${filterStartTime}`).getTime();
+        const endTime = new Date(`${filterDate}T${filterEndTime}`).getTime();
         return recordTime >= startTime && recordTime <= endTime;
       });
     }
@@ -84,10 +91,10 @@ const FacultyDashboard = () => {
   const exportToExcel = () => {
     const dataToExport = filteredRecords.map((record) => ({
       ID: record._id,
-      'Student Name': record.studentName,
-      Class: record.className,
+      StudentName: record.name,
+      Semester: record.semester,
       Subject: record.subjectName,
-      Date: record.date,
+      Date: new Date(record.timestamp).toLocaleDateString('en-CA'),
       Time: new Date(record.timestamp).toLocaleTimeString(),
       Status: record.status,
     }));
@@ -98,6 +105,9 @@ const FacultyDashboard = () => {
 
     XLSX.writeFile(workbook, 'AttendanceRecords.xlsx');
   };
+
+  const presentCount = filteredRecords.filter(r => r.status === 'Present').length;
+  const absentCount = totalStudents !== '' ? Math.max(parseInt(totalStudents) - presentCount, 0) : '-';
 
   if (!user) {
     return (
@@ -132,9 +142,9 @@ const FacultyDashboard = () => {
                 <Grid item xs={12} md={3}>
                   <TextField
                     fullWidth
-                    label="Class Name"
-                    value={filterClass}
-                    onChange={(e) => setFilterClass(e.target.value)}
+                    label="Semester"
+                    value={filterSem}
+                    onChange={(e) => setFilterSem(e.target.value)}
                   />
                 </Grid>
                 <Grid item xs={12} md={3}>
@@ -175,43 +185,35 @@ const FacultyDashboard = () => {
                     onChange={(e) => setFilterEndTime(e.target.value)}
                   />
                 </Grid>
-                <Grid item xs={12} md={12}>
-                  <Button
-                    variant="contained"
-                    onClick={applyFilters}
-                    sx={{ mt: { xs: 1, md: 0 }, mr: 2 }}
-                  >
+                <Grid item xs={12}>
+                  <Button variant="contained" onClick={applyFilters} sx={{ mr: 2 }}>
                     Apply Filters
                   </Button>
-                  <Button
-                    variant="outlined"
-                    color="success"
-                    onClick={exportToExcel}
-                    sx={{ mt: { xs: 1, md: 0 } }}
-                  >
+                  <Button variant="outlined" color="success" onClick={exportToExcel}>
                     Export to Excel
+                  </Button>
+                  <Button variant="outlined" color="error" onClick={() => setIsModalOpen(true)} sx={{ ml: 2 }}>
+                    Find Absent
                   </Button>
                 </Grid>
               </Grid>
 
-              {/* Stats */}
               <Box sx={{ mb: 3, display: 'flex', gap: 4 }}>
                 <Typography variant="subtitle1" color="success.main" fontWeight="bold">
-                  ✅ Present: {filteredRecords.filter(r => r.status === 'Present').length}
+                  ✅ Present: {presentCount}
                 </Typography>
                 <Typography variant="subtitle1" color="error.main" fontWeight="bold">
-                  ❌ Absent: {filteredRecords.filter(r => r.status === 'Absent').length}
+                  ❌ Absent: {absentCount !== '-' ? absentCount : 'Enter total'}
                 </Typography>
               </Box>
 
-              {/* Attendance Table */}
               <Paper elevation={2}>
                 <Table>
                   <TableHead>
                     <TableRow>
                       <TableCell>ID</TableCell>
                       <TableCell>Student Name</TableCell>
-                      <TableCell>Class</TableCell>
+                      <TableCell>Semester</TableCell>
                       <TableCell>Subject</TableCell>
                       <TableCell>Date</TableCell>
                       <TableCell>Time</TableCell>
@@ -222,19 +224,18 @@ const FacultyDashboard = () => {
                     {filteredRecords.map((record) => (
                       <TableRow key={record._id}>
                         <TableCell>{record._id}</TableCell>
-                        <TableCell>{record.studentName}</TableCell>
-                        <TableCell>{record.className}</TableCell>
+                        <TableCell>{record.name}</TableCell>
+                        <TableCell>{record.semester}</TableCell>
                         <TableCell>{record.subjectName}</TableCell>
-                        <TableCell>{record.date}</TableCell>
+                        <TableCell>
+                          {new Date(record.timestamp).toLocaleDateString('en-CA')}
+                        </TableCell>
                         <TableCell>
                           {new Date(record.timestamp).toLocaleTimeString()}
                         </TableCell>
                         <TableCell
                           sx={{
-                            color:
-                              record.status === 'Present'
-                                ? 'success.main'
-                                : 'error.main',
+                            color: record.status === 'Present' ? 'success.main' : 'error.main',
                             fontWeight: 'bold',
                           }}
                         >
@@ -256,8 +257,56 @@ const FacultyDashboard = () => {
           </Card>
         </Box>
       </Box>
+
+      <Modal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        aria-labelledby="absent-modal-title"
+        aria-describedby="absent-modal-description"
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography id="absent-modal-title" variant="h6" fontWeight="bold" gutterBottom>
+            Calculate Absent Students
+          </Typography>
+
+          <TextField
+            fullWidth
+            label="Total Number of Students"
+            type="number"
+            value={totalStudents}
+            onChange={(e) => setTotalStudents(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+
+          <Typography>
+            ✅ Present: <strong>{presentCount}</strong>
+          </Typography>
+          <Typography sx={{ mt: 1 }}>
+            ❌ Absent: <strong>{absentCount}</strong>
+          </Typography>
+
+          <Box sx={{ textAlign: 'right', mt: 3 }}>
+            <Button onClick={() => setIsModalOpen(false)} variant="contained" color="success">
+              Close
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </Box>
   );
 };
 
 export default FacultyDashboard;
+

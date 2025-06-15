@@ -58,7 +58,7 @@ const ProfilePage = () => {
           const errorData = await res.json();
           errorMessage = errorData.message || errorMessage;
         } else {
-          const errorText = await res.text(); // HTML or raw text
+          const errorText = await res.text();
           console.error('HTML error response:', errorText);
           errorMessage = 'Unexpected HTML response from server';
         }
@@ -146,7 +146,6 @@ const ProfilePage = () => {
           overflow: 'hidden'
         }}
       >
-        {/* Header */}
         <Box
           sx={{
             bgcolor: 'primary.main',

@@ -21,39 +21,49 @@ import { useNavigate } from 'react-router-dom';
 const Sidebar = ({ role }) => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
-
   const toggleDrawer = () => {
     setCollapsed(!collapsed);
   };
 
   const drawerWidth = collapsed ? 70 : 250;
+  const dashboardPath =
+    role === 'admin'
+      ? '/admin-dashboard'
+      : role === 'faculty'
+      ? '/faculty-dashboard'
+      : '/student-dashboard';
 
   const commonItems = [
-    { text: 'Dashboard', icon: <DashboardIcon /> },
-    { text: 'Notifications', icon: <NotificationsIcon /> },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: dashboardPath },
+    //{ text: 'Notifications', icon: <NotificationsIcon />, path: '/notifications' }
   ];
 
   const adminItems = [
-    { text: 'Manage Users', icon: <PeopleIcon />,path: '/manage-user' },
-    { text: 'Class Record', icon: <SchoolIcon />,path: '/class-record-admin' },
-    { text: 'Analytics', icon: <DashboardIcon />,path: '/analytics' },
+    { text: 'Manage Users', icon: <PeopleIcon />, path: '/manage-user' },
+    { text: 'Class Record', icon: <SchoolIcon />, path: '/class-record-admin' },
+    { text: 'Analytics', icon: <DashboardIcon />, path: '/analytics' }
   ];
 
   const facultyItems = [
-    { text: 'Class Records', icon: <SchoolIcon /> ,path: '/class-record' },
-    { text: 'Student List', icon: <PeopleIcon /> ,path: '/student-list' },
+    { text: 'Class Records', icon: <SchoolIcon />, path: '/class-record' },
+    { text: 'Attendance Files', icon: <SchoolIcon />, path: '/attendence-file' },
+    //{ text: 'Student List', icon: <PeopleIcon />, path: '/student-list' }
   ];
 
   const studentItems = [
-    { text: 'View Attendance', icon: <SchoolIcon />, path: '/view-attendance' },
+    { text: 'View Attendance', icon: <SchoolIcon />, path: '/view-attendance' }
   ];
 
   const getRoleItems = () => {
     switch (role) {
-      case 'admin': return adminItems;
-      case 'faculty': return facultyItems;
-      case 'student': return studentItems;
-      default: return [];
+      case 'admin':
+        return adminItems;
+      case 'faculty':
+        return facultyItems;
+      case 'student':
+        return studentItems;
+      default:
+        return [];
     }
   };
 
@@ -70,7 +80,7 @@ const Sidebar = ({ role }) => {
           boxShadow: '2px 0px 10px rgba(0,0,0,0.1)',
           backgroundColor: '#1e293b',
           color: '#fff'
-        },
+        }
       }}
     >
       <Box
@@ -78,7 +88,7 @@ const Sidebar = ({ role }) => {
           display: 'flex',
           justifyContent: collapsed ? 'center' : 'flex-end',
           alignItems: 'center',
-          padding: '8px',
+          padding: '8px'
         }}
       >
         <IconButton onClick={toggleDrawer} sx={{ color: '#fff' }}>
@@ -98,8 +108,8 @@ const Sidebar = ({ role }) => {
                 paddingY: '10px',
                 paddingX: collapsed ? '12px' : '24px',
                 '&:hover': {
-                  backgroundColor: '#334155',
-                },
+                  backgroundColor: '#334155'
+                }
               }}
             >
               <ListItemIcon sx={{ color: '#fff', minWidth: '40px' }}>

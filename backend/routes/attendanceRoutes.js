@@ -13,8 +13,8 @@ router.post('/mark', async (req, res) => {
   const {
     userId,
     name,
-    image,  // base64 string from frontend
-    className,
+    image, 
+    semester,
     streamName,
     facultyName,
     subjectName,
@@ -22,7 +22,7 @@ router.post('/mark', async (req, res) => {
   } = req.body;
 
   // Validation
-  if (!image || !className || !streamName || !facultyName || !subjectName) {
+  if (!image || !semester || !streamName || !facultyName || !subjectName) {
     return res.status(400).json({ message: 'Missing required fields.' });
   }
 
@@ -52,7 +52,7 @@ router.post('/mark', async (req, res) => {
     const attendance = new Attendance({
       userId,
       name,
-      className,
+      semester,
       streamName,
       facultyName,
       subjectName,
@@ -66,7 +66,7 @@ router.post('/mark', async (req, res) => {
     await saveAttendanceToCSV({
       userId,
       name,
-      className,
+      semester,
       streamName,
       facultyName,
       subjectName,
@@ -94,5 +94,40 @@ router.get('/get-all', async (req, res) => {
     res.status(500).json({ message: 'Error fetching attendance records', error });
   }
 });
+router.get('/get-by-semester', async (req, res) => {
+  const semester = req.query.semester;
+  try {
+    const data = await Attendance.find({ semester }); 
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// GET /api/attendance/student/:userId
+router.get('/student/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const records = await Attendance.find({ userId }).sort({ timestamp: -1 });
+
+    const formatted = records.map(record => ({
+      date: new Date(record.timestamp).toLocaleDateString('en-IN'),
+      status: record.status,
+      time: new Date(record.timestamp).toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      subjectName: record.subjectName || 'N/A',
+      facultyName: record.facultyName || 'N/A'
+    }));
+
+    res.status(200).json(formatted);
+  } catch (error) {
+    console.error('❌ Error fetching student attendance:', error);
+    res.status(500).json({ message: 'Failed to get student attendance' });
+  }
+});
+
 
 module.exports = router;

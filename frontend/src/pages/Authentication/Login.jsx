@@ -102,7 +102,7 @@ const LoginPage = () => {
 
   // Passcode verification
   const handleVerifyPasscode = () => {
-    const decodedPasscode = "admin123"; // 🔒 Replace with your secure passcode
+    const decodedPasscode = "admin123"; 
 
     if (enteredPasscode === decodedPasscode) {
       setOpenPasscodeDialog(false);
@@ -260,7 +260,6 @@ const LoginPage = () => {
         </Box>
       </Box>
 
-      {/* Passcode Dialog */}
       <Dialog
       open={openPasscodeDialog}
       onClose={() => setOpenPasscodeDialog(false)}
