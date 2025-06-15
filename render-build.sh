@@ -1,21 +1,28 @@
 #!/usr/bin/env bash
 
-# Install Frontend dependencies and build
-echo "📦 Installing frontend dependencies..."
-cd frontend
-npm install
+# Exit on error
+set -o errexit
 
-echo "⚙️ Building frontend..."
+# Navigate to frontend and build React app
+cd ../frontend
+npm install
 npm run build
-cd ..
 
-# Install Backend dependencies (Node)
-echo "📦 Installing backend dependencies..."
-cd backend
+# Navigate back to backend
+cd ../backend
+
+# Install Node.js backend dependencies
 npm install
 
-# Install Python dependencies for face recognition
-echo "🐍 Installing Python dependencies..."
-pip3 install -r recognition/requirements.txt
+# Ensure Python build tools are ready
+pip install --upgrade pip setuptools wheel
 
-echo "✅ Build completed successfully."
+# Install CMake first (required for dlib)
+pip install --no-cache-dir cmake
+
+# Install prebuilt versions of dlib and face-recognition to avoid building from source
+pip install --no-cache-dir dlib==19.24.2
+pip install --no-cache-dir face-recognition==1.3.0
+
+# Install the rest of Python dependencies
+pip install --no-cache-dir -r requirements.txt
